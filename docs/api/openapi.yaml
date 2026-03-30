@@ -1,0 +1,47 @@
+openapi: 3.0.0
+info:
+  title: Smart Retail Shelf Intelligence API
+  version: 1.0.0
+  description: AI-powered retail shelf monitoring system
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register new user
+      tags: [Authentication]
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Authentication]
+  /alerts/active:
+    get:
+      summary: Get active alerts
+      tags: [Alerts]
+  /analytics/dashboard:
+    get:
+      summary: Get dashboard analytics
+      tags: [Analytics]
+  /planogram:
+    get:
+      summary: List planograms
+      tags: [Planogram]
+  /products:
+    get:
+      summary: Get all products
+      tags: [Products]
+  /inventory:
+    get:
+      summary: Get inventory
+      tags: [Inventory]
+  /forecasting/demand:
+    get:
+      summary: Get demand forecast
+      tags: [Forecasting]
+  /cameras:
+    get:
+      summary: Get all cameras
+      tags: [Cameras]

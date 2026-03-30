@@ -1,0 +1,33 @@
+model:
+  name: yolov8n
+  pretrained: true
+  classes: 15
+  
+training:
+  epochs: 100
+  batch_size: 16
+  img_size: 640
+  learning_rate: 0.01
+  optimizer: AdamW
+  
+data:
+  train_path: data/train
+  val_path: data/val
+  test_path: data/test
+  
+classes:
+  0: Milk_1L
+  1: White_Bread
+  2: Eggs_Dozen
+  3: Cheese
+  4: Yogurt
+  5: Butter
+  6: Apples
+  7: Bananas
+  8: Oranges
+  9: Potato_Chips
+  10: Cookies
+  11: Popcorn
+  12: Cream_Cheese
+  13: Croissant
+  14: Bagels
