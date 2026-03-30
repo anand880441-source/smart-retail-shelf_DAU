@@ -1,0 +1,18 @@
+.light-theme {
+  background-color: #F9FAFB;
+  color: #1F2937;
+}
+
+.light-theme .card {
+  background-color: #FFFFFF;
+  border-color: #E5E7EB;
+}
+
+.light-theme .sidebar {
+  background-color: #FFFFFF;
+}
+
+.light-theme .header {
+  background-color: #FFFFFF;
+  border-bottom-color: #E5E7EB;
+}

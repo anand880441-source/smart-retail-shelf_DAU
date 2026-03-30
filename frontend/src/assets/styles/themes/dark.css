@@ -1,0 +1,18 @@
+.dark-theme {
+  background-color: #1F2937;
+  color: #F9FAFB;
+}
+
+.dark-theme .card {
+  background-color: #374151;
+  border-color: #4B5563;
+}
+
+.dark-theme .sidebar {
+  background-color: #111827;
+}
+
+.dark-theme .header {
+  background-color: #1F2937;
+  border-bottom-color: #374151;
+}

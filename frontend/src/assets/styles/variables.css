@@ -1,0 +1,16 @@
+:root {
+  --primary: #2563EB;
+  --primary-dark: #1D4ED8;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --info: #3B82F6;
+  --dark: #1F2937;
+  --light: #F9FAFB;
+  --gray: #6B7280;
+  --border-radius: 8px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
