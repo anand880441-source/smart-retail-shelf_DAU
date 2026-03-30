@@ -1,0 +1,68 @@
+{
+  "stores": [
+    {
+      "store_id": "store_001",
+      "name": "Smart Retail Downtown",
+      "address": "123 Main Street, Ahmedabad",
+      "aisles": [
+        {
+          "aisle_id": 1,
+          "name": "Dairy",
+          "shelf_count": 3,
+          "sections": ["top", "middle", "bottom"]
+        },
+        {
+          "aisle_id": 2,
+          "name": "Bakery",
+          "shelf_count": 3,
+          "sections": ["top", "middle", "bottom"]
+        },
+        {
+          "aisle_id": 3,
+          "name": "Produce",
+          "shelf_count": 3,
+          "sections": ["top", "middle", "bottom"]
+        },
+        {
+          "aisle_id": 4,
+          "name": "Snacks",
+          "shelf_count": 3,
+          "sections": ["top", "middle", "bottom"]
+        },
+        {
+          "aisle_id": 5,
+          "name": "Eggs & Dairy",
+          "shelf_count": 3,
+          "sections": ["top", "middle", "bottom"]
+        }
+      ]
+    }
+  ],
+  "planogram_reference": {
+    "store_001_aisle_1": {
+      "top_shelf": ["MILK001", "MILK001"],
+      "middle_shelf": ["CHS002"],
+      "bottom_shelf": ["YGT003", "YGT003"]
+    },
+    "store_001_aisle_2": {
+      "top_shelf": ["BRD004"],
+      "middle_shelf": ["CRO005"],
+      "bottom_shelf": ["BGL006"]
+    },
+    "store_001_aisle_3": {
+      "top_shelf": ["APL007", "APL007"],
+      "middle_shelf": ["BAN008", "BAN008"],
+      "bottom_shelf": ["ORG009"]
+    },
+    "store_001_aisle_4": {
+      "top_shelf": ["CHP010"],
+      "middle_shelf": ["COK011"],
+      "bottom_shelf": ["POP012"]
+    },
+    "store_001_aisle_5": {
+      "top_shelf": ["EGG013", "EGG013"],
+      "middle_shelf": ["BTR014"],
+      "bottom_shelf": ["CRM015"]
+    }
+  }
+}
