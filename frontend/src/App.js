@@ -13,7 +13,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ShelfMapPage from "./pages/ShelfMapPage";
 import AlertsPage from "./pages/AlertsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import PlanogramPage from './pages/PlanogramPage';
+import PlanogramPage from "./pages/PlanogramPage";
+import CamerasPage from "./pages/CamerasPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function App() {
   return (
@@ -58,6 +60,22 @@ function App() {
           element={
             <ProtectedRoute>
               <PlanogramPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cameras"
+          element={
+            <ProtectedRoute>
+              <CamerasPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />
