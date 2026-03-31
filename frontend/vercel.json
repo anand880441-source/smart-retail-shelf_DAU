@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://smart-retail-backend-pjta.onrender.com",
+    "REACT_APP_WS_URL": "wss://smart-retail-backend-pjta.onrender.com"
+  }
+}
