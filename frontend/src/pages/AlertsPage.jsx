@@ -1,135 +1,63 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Chip,
-  IconButton,
-  Button,
-  Tabs,
-  Tab,
-  Badge,
-  Alert as MuiAlert,
-  Snackbar
+import React, { useState, useEffect } from 'react';
+import { 
+  Box, Typography, Grid, Tabs, Tab, 
+  Badge, CircularProgress, Paper, Alert as MuiAlert, 
+  Snackbar, Button 
 } from '@mui/material';
-import {
+import { 
   Notifications as NotificationsIcon,
   CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-  Info as InfoIcon,
-  Close as CloseIcon,
-  Delete as DeleteIcon
+  History as HistoryIcon
 } from '@mui/icons-material';
-import api, { authService } from '../services/api';
-
-const getPriorityConfig = (priority) => {
-  switch(priority) {
-    case 'critical': return { color: '#EF4444', icon: <ErrorIcon />, label: 'CRITICAL' };
-    case 'high': return { color: '#F97316', icon: <WarningIcon />, label: 'HIGH' };
-    case 'medium': return { color: '#F59E0B', icon: <InfoIcon />, label: 'MEDIUM' };
-    case 'low': return { color: '#10B981', icon: <InfoIcon />, label: 'LOW' };
-    default: return { color: '#6B7280', icon: <InfoIcon />, label: 'UNKNOWN' };
-  }
-};
-
-const getTypeConfig = (type) => {
-  switch(type) {
-    case 'stockout': return { label: 'Stockout', bgColor: '#FEE2E2' };
-    case 'low_stock': return { label: 'Low Stock', bgColor: '#FEF3C7' };
-    case 'planogram_violation': return { label: 'Planogram Violation', bgColor: '#E0E7FF' };
-    default: return { label: 'Alert', bgColor: '#F3F4F6' };
-  }
-};
+import AlertCard from '../components/common/Cards/AlertCard';
+import MetricCard from '../components/common/Cards/MetricCard';
+import { useAlerts } from '../context/AlertContext';
+import websocketService from '../services/websocketService';
+import { alertService } from '../services/api';
 
 const AlertsPage = () => {
-  const [alerts, setAlerts] = useState([]);
-  const [stats, setStats] = useState({ critical: 0, high: 0, medium: 0, low: 0, total_revenue: 0 });
+  const { alerts, stats, loading, fetchAlerts, resolveAlert } = useAlerts();
   const [tabValue, setTabValue] = useState(0);
-  const [socket, setSocket] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-  const [loading, setLoading] = useState(true);
 
-  // Fetch alerts from API
-  const fetchAlerts = async () => {
-    try {
-      const response = await api.get('/alerts/active');
-      setAlerts(response.data);
-      const statsResponse = await api.get('/alerts/stats');
-      setStats(statsResponse.data);
-    } catch (error) {
-      console.error('Failed to fetch alerts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch all alerts (history)
-  const fetchAllAlerts = async () => {
-    try {
-      const response = await api.get('/alerts/all');
-      setAlerts(response.data);
-    } catch (error) {
-      console.error('Failed to fetch all alerts:', error);
-    }
-  };
-
-  // Resolve alert
-  const resolveAlert = async (alertId) => {
-    try {
-      await api.put(`/alerts/${alertId}`, { status: 'resolved' });
-      fetchAlerts();
-      setSnackbar({ open: true, message: 'Alert resolved!', severity: 'success' });
-    } catch (error) {
-      console.error('Failed to resolve alert:', error);
-    }
-  };
-
-  // Setup WebSocket connection
+  // Connect WebSocket for real-time updates
   useEffect(() => {
-    fetchAlerts();
+    const wsUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:8000'}/ws/alerts`;
+    websocketService.connect(wsUrl);
 
-    const token = localStorage.getItem('access_token');
-    const wsUrl = `${process.env.REACT_APP_WS_URL?.replace('http', 'ws') || 'ws://localhost:8000'}/alerts/ws`;
-    
-    const ws = new WebSocket(wsUrl);
-    
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-    };
-    
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+    const handleNewAlert = (data) => {
       if (data.type === 'new_alert') {
-        setAlerts(prev => [data.data, ...prev]);
+        fetchAlerts(); // Refresh global alert state
         setSnackbar({ 
           open: true, 
-          message: `New ${data.data.priority} alert: ${data.data.title}`, 
-          severity: data.data.priority === 'critical' ? 'error' : 'warning' 
+          message: `New Alert: ${data.alert.title}`, 
+          severity: data.alert.priority === 'critical' ? 'error' : 'warning' 
         });
-        fetchAlerts(); // Refresh stats
       }
     };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-    
-    setSocket(ws);
-    
-    return () => {
-      if (ws) ws.close();
-    };
-  }, []);
 
-  const handleTabChange = (event, newValue) => {
+    websocketService.addListener(handleNewAlert);
+
+    return () => {
+      websocketService.removeListener(handleNewAlert);
+      websocketService.disconnect();
+    };
+  }, [fetchAlerts]);
+
+  const handleTabChange = async (event, newValue) => {
     setTabValue(newValue);
-    if (newValue === 0) {
-      fetchAlerts();
-    } else {
-      fetchAllAlerts();
+    if (newValue === 1) {
+      setHistoryLoading(true);
+      try {
+        const response = await alertService.getAlerts({ status: 'resolved' });
+        setHistory(response.data);
+      } catch (err) {
+        console.error("Failed to fetch alert history:", err);
+      } finally {
+        setHistoryLoading(false);
+      }
     }
   };
 
@@ -137,139 +65,124 @@ const AlertsPage = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const filteredAlerts = alerts.filter(alert => {
-    if (tabValue === 0) return alert.status === 'active';
-    return true;
-  });
-
-  const criticalAlerts = filteredAlerts.filter(a => a.priority === 'critical').length;
+  const activeAlertsCount = alerts?.length || 0;
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Container maxWidth="xl">
-        {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" fontWeight="bold" sx={{ color: '#1F2937' }}>
-            🔔 Alert Center
+    <Box>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+            Alert Center
           </Typography>
-          <Badge badgeContent={stats.critical} color="error">
-            <NotificationsIcon sx={{ fontSize: 32, color: '#6B7280' }} />
-          </Badge>
+          <Typography variant="body1" color="text.secondary">
+            Manage real-time shelf alerts and stockout notifications.
+          </Typography>
         </Box>
+        <Badge badgeContent={activeAlertsCount} color="error" overlap="circular">
+          <NotificationsIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+        </Badge>
+      </Box>
 
-        {/* Stats Cards */}
-        <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-          <Card sx={{ bgcolor: '#EF4444', color: 'white', minWidth: 120 }}>
-            <CardContent>
-              <Typography variant="h4">{stats.critical}</Typography>
-              <Typography variant="body2">Critical</Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ bgcolor: '#F97316', color: 'white', minWidth: 120 }}>
-            <CardContent>
-              <Typography variant="h4">{stats.high}</Typography>
-              <Typography variant="body2">High</Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ bgcolor: '#F59E0B', color: 'white', minWidth: 120 }}>
-            <CardContent>
-              <Typography variant="h4">{stats.medium}</Typography>
-              <Typography variant="body2">Medium</Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ bgcolor: '#10B981', color: 'white', minWidth: 120 }}>
-            <CardContent>
-              <Typography variant="h4">{stats.low}</Typography>
-              <Typography variant="body2">Low</Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ bgcolor: '#2563EB', color: 'white', minWidth: 180 }}>
-            <CardContent>
-              <Typography variant="h5">${stats.total_revenue}</Typography>
-              <Typography variant="body2">Revenue at Risk</Typography>
-            </CardContent>
-          </Card>
-        </Box>
+      {/* Stats Summary */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3} lg={2}>
+          <MetricCard 
+            title="Critical" 
+            value={stats?.critical || 0} 
+            color="#EF4444" 
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={2}>
+          <MetricCard 
+            title="High" 
+            value={stats?.high || 0} 
+            color="#F97316" 
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={2}>
+          <MetricCard 
+            title="Medium" 
+            value={stats?.medium || 0} 
+            color="#F59E0B" 
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={2}>
+          <MetricCard 
+            title="Low" 
+            value={stats?.low || 0} 
+            color="#10B981" 
+          />
+        </Grid>
+        <Grid item xs={12} md={6} lg={4}>
+          <MetricCard 
+            title="Revenue at Risk" 
+            value={`$${stats?.total_revenue?.toLocaleString() || 0}`} 
+            color="#2563EB"
+            subtitle="Potential daily loss"
+          />
+        </Grid>
+      </Grid>
 
-        {/* Tabs */}
-        <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 2 }}>
-          <Tab label={`Active Alerts (${alerts.filter(a => a.status === 'active').length})`} />
-          <Tab label="Alert History" />
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="alert tabs">
+          <Tab icon={<NotificationsIcon sx={{ mr: 1 }} />} iconPosition="start" label={`Active Alerts (${activeAlertsCount})`} />
+          <Tab icon={<HistoryIcon sx={{ mr: 1 }} />} iconPosition="start" label="Alert History" />
         </Tabs>
+      </Box>
 
-        {/* Alerts List */}
-        {loading ? (
-          <Typography>Loading alerts...</Typography>
-        ) : filteredAlerts.length === 0 ? (
-          <Card sx={{ p: 4, textAlign: 'center' }}>
-            <CheckCircleIcon sx={{ fontSize: 48, color: '#10B981', mb: 2 }} />
-            <Typography variant="h6">No Alerts</Typography>
-            <Typography color="textSecondary">All shelves are in good condition!</Typography>
-          </Card>
-        ) : (
-          filteredAlerts.map((alert) => {
-            const priorityConfig = getPriorityConfig(alert.priority);
-            const typeConfig = getTypeConfig(alert.type);
-            
-            return (
-              <Card key={alert.id} sx={{ mb: 2, borderLeft: `4px solid ${priorityConfig.color}` }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
-                      {priorityConfig.icon}
-                      <Chip 
-                        label={priorityConfig.label} 
-                        size="small" 
-                        sx={{ bgcolor: priorityConfig.color, color: 'white' }}
-                      />
-                      <Chip 
-                        label={typeConfig.label} 
-                        size="small" 
-                        sx={{ bgcolor: typeConfig.bgColor }}
-                      />
-                      {alert.status !== 'active' && (
-                        <Chip label="Resolved" size="small" sx={{ bgcolor: '#D1D5DB' }} />
-                      )}
-                    </Box>
-                    {alert.status === 'active' && (
-                      <IconButton onClick={() => resolveAlert(alert.id)} size="small">
-                        <CheckCircleIcon sx={{ color: '#10B981' }} />
-                      </IconButton>
-                    )}
-                  </Box>
-                  
-                  <Typography variant="h6">{alert.title}</Typography>
-                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                    {alert.description}
-                  </Typography>
-                  
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 1 }}>
-                    <Typography variant="caption" sx={{ bgcolor: '#F3F4F6', p: 0.5, px: 1, borderRadius: 1 }}>
-                      📍 {alert.location}
-                    </Typography>
-                    <Typography variant="caption" sx={{ bgcolor: '#F3F4F6', p: 0.5, px: 1, borderRadius: 1 }}>
-                      🏷️ {alert.product_sku}
-                    </Typography>
-                    <Typography variant="caption" sx={{ bgcolor: '#FEE2E2', p: 0.5, px: 1, borderRadius: 1 }}>
-                      💰 ${alert.revenue_impact} at risk
-                    </Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      🕐 {new Date(alert.created_at).toLocaleString()}
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
+      {tabValue === 0 && (
+        <Box>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <CircularProgress />
+            </Box>
+          ) : alerts.length === 0 ? (
+            <Paper sx={{ p: 8, textAlign: 'center', borderRadius: 2 }}>
+              <CheckCircleIcon sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
+              <Typography variant="h6">All Clear!</Typography>
+              <Typography color="text.secondary">No active alerts at the moment.</Typography>
+              <Button variant="outlined" sx={{ mt: 2 }} onClick={fetchAlerts}>Refresh</Button>
+            </Paper>
+          ) : (
+            <Grid container spacing={2}>
+              {alerts.map((alert, idx) => (
+                <Grid item xs={12} key={alert.id || alert._id || idx}>
+                  <AlertCard alert={alert} onResolve={resolveAlert} />
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Box>
+      )}
 
-        {/* Snackbar for notifications */}
-        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-          <MuiAlert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-            {snackbar.message}
-          </MuiAlert>
-        </Snackbar>
-      </Container>
+      {tabValue === 1 && (
+        <Box>
+          {historyLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <CircularProgress />
+            </Box>
+          ) : history.length === 0 ? (
+            <Paper sx={{ p: 8, textAlign: 'center', borderRadius: 2 }}>
+              <Typography variant="h6">No History</Typography>
+              <Typography color="text.secondary">Resolved alerts will appear here.</Typography>
+            </Paper>
+          ) : (
+            <Grid container spacing={2}>
+              {history.map((alert, idx) => (
+                <Grid item xs={12} key={alert.id || alert._id || idx}>
+                  <AlertCard alert={alert} />
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Box>
+      )}
+
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <MuiAlert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%', boxShadow: 3 }}>
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 };

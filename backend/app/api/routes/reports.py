@@ -2,12 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from ...core.database import get_database
-from ..routes.auth import get_current_user_required
+from ..dependencies import get_current_user_required
 from datetime import datetime, timedelta
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from io import BytesIO
 from fastapi.responses import StreamingResponse
+
+try:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    HAS_REPORTLAB = True
+except ImportError:
+    HAS_REPORTLAB = False
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -123,6 +128,8 @@ async def export_pdf_report(
     current_user=Depends(get_current_user_required)
 ):
     """Export report as PDF"""
+    if not HAS_REPORTLAB:
+        raise HTTPException(status_code=501, detail="PDF export requires reportlab. Install with: pip install reportlab")
     buffer = BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     

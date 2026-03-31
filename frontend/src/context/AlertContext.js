@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 const AlertContext = createContext();
@@ -23,22 +23,39 @@ const alertReducer = (state, action) => {
 export const AlertProvider = ({ children }) => {
   const [state, dispatch] = useReducer(alertReducer, { alerts: [], stats: {}, loading: true });
 
-  const fetchAlerts = async () => {
-    const response = await api.get('/alerts/active');
-    dispatch({ type: 'SET_ALERTS', payload: response.data });
-    const statsResponse = await api.get('/alerts/stats');
-    dispatch({ type: 'SET_STATS', payload: statsResponse.data });
-  };
+  const fetchAlerts = useCallback(async () => {
+    try {
+      const response = await api.get('/alerts/active');
+      dispatch({ type: 'SET_ALERTS', payload: response.data });
+    } catch (err) {
+      console.error('Failed to fetch alerts:', err);
+      dispatch({ type: 'SET_ALERTS', payload: [] });
+    }
+    try {
+      const statsResponse = await api.get('/alerts/stats');
+      dispatch({ type: 'SET_STATS', payload: statsResponse.data });
+    } catch (err) {
+      console.error('Failed to fetch alert stats:', err);
+    }
+  }, []);
 
   const resolveAlert = async (alertId) => {
-    await api.put(`/alerts/${alertId}`, { status: 'resolved' });
-    dispatch({ type: 'RESOLVE_ALERT', payload: alertId });
-    fetchAlerts();
+    if (!alertId) {
+      console.error('resolveAlert called with undefined alertId');
+      return;
+    }
+    try {
+      await api.put(`/alerts/${alertId}`, { status: 'resolved' });
+      dispatch({ type: 'RESOLVE_ALERT', payload: alertId });
+      fetchAlerts();
+    } catch (err) {
+      console.error('Failed to resolve alert:', err);
+    }
   };
 
   useEffect(() => {
     fetchAlerts();
-  }, []);
+  }, [fetchAlerts]);
 
   return (
     <AlertContext.Provider value={{ ...state, resolveAlert, fetchAlerts }}>

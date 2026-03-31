@@ -6,7 +6,7 @@ from PIL import Image
 import numpy as np
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from ...core.database import get_database
-from ..routes.auth import get_current_user_required
+from ..dependencies import get_current_user_required
 from datetime import datetime  
 
 router = APIRouter(prefix="/detection", tags=["Detection"])

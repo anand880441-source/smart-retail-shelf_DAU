@@ -5,7 +5,7 @@ from ...services.planogram_service import (
     create_planogram, get_planograms, get_planogram, compare_compliance
 )
 from ...models.planogram import PlanogramCreate, ComplianceResult
-from ..routes.auth import get_current_user_required
+from ..dependencies import get_current_user_required
 from motor.motor_asyncio import AsyncIOMotorDatabase
 import base64
 import io

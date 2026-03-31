@@ -1,24 +1,23 @@
 from datetime import datetime
+from bson import ObjectId
 from fastapi import APIRouter, HTTPException, status, Depends, Request
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
+from motor.motor_asyncio import AsyncIOMotorDatabase
+import httpx
+
 from ...core.database import get_database
 from ...core.config import settings
 from ...models.user import UserCreate, UserResponse, Token
 from ...services.auth_service import (
     get_password_hash, verify_password, create_access_token, 
-    decode_token, get_google_user_info, get_github_user_info
+    get_google_user_info, get_github_user_info
 )
-from motor.motor_asyncio import AsyncIOMotorDatabase
-import httpx
-
-# ... rest of your code remains the same
-from bson import ObjectId
+from ..dependencies import get_current_user_required
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 # Initialize OAuth
 oauth = OAuth(Config(environ={
@@ -38,38 +37,6 @@ oauth.register(
 
 async def get_user_by_email(db: AsyncIOMotorDatabase, email: str):
     return await db.users.find_one({"email": email})
-
-async def create_user(db: AsyncIOMotorDatabase, user_data: dict):
-    result = await db.users.insert_one(user_data)
-    return await db.users.find_one({"_id": result.inserted_id})
-
-# ==================== JWT Authentication ====================
-
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    if not token:
-        return None
-    payload = decode_token(token)
-    if payload is None:
-        return None
-    email = payload.get("sub")
-    if email is None:
-        return None
-    user = await get_user_by_email(db, email)
-    return user
-
-async def get_current_user_required(
-    current_user = Depends(get_current_user)
-):
-    if current_user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return current_user
 
 # ==================== Email/Password Auth ====================
 
@@ -146,10 +113,7 @@ async def google_callback(request: Request, db: AsyncIOMotorDatabase = Depends(g
                 "created_at": datetime.utcnow(),
                 "auth_provider": "google"
             }
-            result = await db.users.insert_one(new_user)
-            user_id = str(result.inserted_id)
-        else:
-            user_id = str(existing_user["_id"])
+            await db.users.insert_one(new_user)
         
         # Create JWT token
         access_token = create_access_token(data={"sub": user_info["email"]})
@@ -208,9 +172,9 @@ async def github_callback(code: str, db: AsyncIOMotorDatabase = Depends(get_data
                     "is_active": True,
                     "created_at": datetime.utcnow(),
                     "auth_provider": "github",
-                    "github_id": user_info.get("id")
+                    "github_id": str(user_info.get("id"))
                 }
-                result = await db.users.insert_one(new_user)
+                await db.users.insert_one(new_user)
             
             # Create JWT token
             access_token_jwt = create_access_token(data={"sub": user_info["email"]})
@@ -233,8 +197,3 @@ async def get_current_user_info(current_user = Depends(get_current_user_required
         store_id=current_user.get("store_id"),
         is_active=current_user["is_active"]
     )
-
-# Add missing import
-from datetime import datetime
-from fastapi.responses import RedirectResponse
-import httpx

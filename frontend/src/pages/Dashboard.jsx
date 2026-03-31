@@ -1,217 +1,159 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/api';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Box,
-  Container,
-  Grid,
-  Card,
-  CardContent,
-  IconButton,
-  Avatar,
-  Menu,
-  MenuItem,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider
+import { 
+  Typography, Grid, Box, CircularProgress, 
+  Alert, Paper, Table, TableBody, TableCell, 
+  TableContainer, TableHead, TableRow, Chip
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import StoreIcon from '@mui/icons-material/Store';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import SettingsIcon from '@mui/icons-material/Settings';
-import LogoutIcon from '@mui/icons-material/Logout';
-import AlertsPage from './AlertsPage';
-import ViewQuiltIcon from '@mui/icons-material/ViewQuilt';
-
-const drawerWidth = 240;
+import { 
+  TrendingUp as TrendingUpIcon, 
+  Warning as WarningIcon, 
+  AttachMoney as AttachMoneyIcon, 
+  CheckCircle as CheckCircleIcon 
+} from '@mui/icons-material';
+import MetricCard from '../components/common/Cards/MetricCard';
+import { dashboardService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useAlerts } from '../context/AlertContext';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const { user } = useAuth();
+  const { alerts, loading: alertsLoading } = useAlerts();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await dashboardService.getStats();
+        setStats(response.data);
+        setError(null);
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats:", err);
+        setError("Could not load dashboard statistics. Please try again later.");
+        // Fallback to mock data if API fails during development
+        setStats({
+          store_health: 92,
+          active_stockouts: 12,
+          revenue_at_risk: 4231,
+          planogram_compliance: 87
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    authService.logout();
-    navigate('/login');
-  };
-
-  const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'Shelf Map', icon: <StoreIcon />, path: '/shelf-map' },
-    { text: 'Alerts', icon: <NotificationsIcon />, path: '/alerts' },
-    { text: 'Analytics', icon: <AssessmentIcon />, path: '/analytics' },
-    { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
-    { text: 'Analytics', icon: <AssessmentIcon />, path: '/analytics' },
-    { text: 'Planogram', icon: <ViewQuiltIcon />, path: '/planogram' }
-  ];
-
-  const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" sx={{ color: '#2563EB', fontWeight: 'bold' }}>
-          Smart Retail
-        </Typography>
-      </Toolbar>
-      <Divider />
-      <List>
-        {menuItems.map((item) => (
-          <ListItem button key={item.text} onClick={() => navigate(item.path)}>
-            <ListItemIcon sx={{ color: '#2563EB' }}>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItem>
-        ))}
-      </List>
-      <Divider />
-      <List>
-        <ListItem button onClick={handleLogout}>
-          <ListItemIcon sx={{ color: '#EF4444' }}><LogoutIcon /></ListItemIcon>
-          <ListItemText primary="Logout" />
-        </ListItem>
-      </List>
-    </div>
-  );
+  if (loading && !stats) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" sx={{ zIndex: 1201, bgcolor: 'white', color: '#1F2937', boxShadow: 1 }}>
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold', color: '#2563EB' }}>
-            Smart Retail Shelf Intelligence
-          </Typography>
-          <IconButton onClick={handleMenuOpen}>
-            <Avatar sx={{ bgcolor: '#2563EB' }}>
-              {user?.name?.charAt(0) || 'U'}
-            </Avatar>
-          </IconButton>
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-            <MenuItem disabled>
-              <Typography variant="body2">{user?.name}</Typography>
-            </MenuItem>
-            <MenuItem disabled>
-              <Typography variant="caption" color="textSecondary">{user?.email}</Typography>
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
-
-      <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{ display: { xs: 'block', sm: 'none' }, '& .MuiDrawer-paper': { width: drawerWidth } }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{ display: { xs: 'none', sm: 'block' }, '& .MuiDrawer-paper': { width: drawerWidth } }}
-          open
-        >
-          {drawer}
-        </Drawer>
+    <Box>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+          Welcome back, {user?.name || 'User'}!
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Here is what's happening at your store today.
+        </Typography>
       </Box>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
-        <Container maxWidth="lg">
-          <Typography variant="h4" gutterBottom>Welcome, {user?.name || 'User'}!</Typography>
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-          <Grid container spacing={3} sx={{ mt: 2 }}>
-            <Grid item xs={12} md={6} lg={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>Store Health</Typography>
-                  <Typography variant="h3" sx={{ color: '#10B981' }}>92%</Typography>
-                  <Typography variant="body2">↑ 5% from last week</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6} lg={3}>
+          <MetricCard 
+            title="Store Health" 
+            value={`${stats?.store_health || 0}%`} 
+            icon={<CheckCircleIcon />}
+            color="#10B981"
+            subtitle="↑ 5% from last week"
+          />
+        </Grid>
+        <Grid item xs={12} md={6} lg={3}>
+          <MetricCard 
+            title="Active Stockouts" 
+            value={stats?.active_stockouts || 0} 
+            icon={<WarningIcon />}
+            color="#EF4444"
+            subtitle={`${alerts?.filter(a => a.priority === 'critical').length || 0} Critical alerts`}
+          />
+        </Grid>
+        <Grid item xs={12} md={6} lg={3}>
+          <MetricCard 
+            title="Revenue at Risk" 
+            value={`$${stats?.revenue_at_risk?.toLocaleString() || 0}`} 
+            icon={<AttachMoneyIcon />}
+            color="#F59E0B"
+            subtitle="Potential daily loss"
+          />
+        </Grid>
+        <Grid item xs={12} md={6} lg={3}>
+          <MetricCard 
+            title="Compliance" 
+            value={`${stats?.planogram_compliance || 0}%`} 
+            icon={<TrendingUpIcon />}
+            color="#2563EB"
+            subtitle="Planogram adherence"
+          />
+        </Grid>
+      </Grid>
 
-            <Grid item xs={12} md={6} lg={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>Active Stockouts</Typography>
-                  <Typography variant="h3" sx={{ color: '#EF4444' }}>12</Typography>
-                  <Typography variant="body2">Critical: 3 | Warning: 9</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={6} lg={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>Revenue at Risk</Typography>
-                  <Typography variant="h3" sx={{ color: '#F59E0B' }}>$4,231</Typography>
-                  <Typography variant="body2">From current stockouts</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={6} lg={3}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>Planogram Compliance</Typography>
-                  <Typography variant="h3" sx={{ color: '#2563EB' }}>87%</Typography>
-                  <Typography variant="body2">↑ 12% from last month</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-
-          <Grid container spacing={3} sx={{ mt: 2 }}>
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>Recent Alerts</Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Real-time alerts will appear here once integrated.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
+      <Grid container spacing={3} sx={{ mt: 1 }}>
+        <Grid item xs={12}>
+          <Paper sx={{ p: 0, overflow: 'hidden' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>Recent Critical Alerts</Typography>
+            </Box>
+            <TableContainer>
+              <Table>
+                <TableHead sx={{ bgcolor: 'grey.50' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Alert</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Product</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Aisle</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Priority</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Impact</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {alertsLoading ? (
+                    <TableRow><TableCell colSpan={5} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+                  ) : alerts?.filter(a => a.priority === 'critical').length > 0 ? (
+                    alerts.filter(a => a.priority === 'critical').slice(0, 5).map((alert, idx) => (
+                      <TableRow key={alert.id || alert._id || idx}>
+                        <TableCell>{alert.type}</TableCell>
+                        <TableCell>{alert.product_name || 'N/A'}</TableCell>
+                        <TableCell>{alert.aisle || 'N/A'}</TableCell>
+                        <TableCell>
+                          <Chip label={alert.priority} color="error" size="small" sx={{ fontWeight: 600 }} />
+                        </TableCell>
+                        <TableCell sx={{ color: 'error.main', fontWeight: 600 }}>
+                          -${alert.revenue_impact || 0}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                        <Typography variant="body2" color="text.secondary">No critical alerts at the moment.</Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Grid>
+      </Grid>
     </Box>
   );
 };

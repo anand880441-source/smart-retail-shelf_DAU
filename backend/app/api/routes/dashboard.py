@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from datetime import datetime, timedelta
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from ...core.database import get_database
-from ..routes.auth import get_current_user_required
+from ..dependencies import get_current_user_required
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 

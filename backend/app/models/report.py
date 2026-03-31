@@ -1,6 +1,12 @@
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel
+from enum import Enum
+
+class ReportType(str, Enum):
+    STOCKOUT = "stockout"
+    COMPLIANCE = "compliance"
+    INVENTORY = "inventory"
 
 class StockoutReport(BaseModel):
     period_days: int

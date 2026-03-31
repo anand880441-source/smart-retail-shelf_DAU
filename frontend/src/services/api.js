@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: `${API_URL}`,
@@ -25,7 +25,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('user');
       window.location.href = '/login';
@@ -56,6 +56,70 @@ export const authService = {
     localStorage.removeItem('user');
     window.location.href = '/login';
   }
+};
+
+export const alertService = {
+  getAlerts: (params) => api.get('/alerts', { params }),
+  getActiveAlerts: () => api.get('/alerts/active'),
+  updateAlertStatus: (id, status) => api.put(`/alerts/${id}`, { status }),
+  getAlertStats: () => api.get('/alerts/stats'),
+};
+
+export const analyticsService = {
+  getDashboardStats: () => api.get('/analytics/dashboard'),
+  getForecasts: () => api.get('/analytics/forecast'),
+  getRealtimeStats: () => api.get('/analytics/realtime'),
+};
+
+export const planogramService = {
+  getPlanograms: () => api.get('/planogram'),
+  getPlanogram: (id) => api.get(`/planogram/${id}`),
+  createPlanogram: (data) => api.post('/planogram', data),
+  checkCompliance: (id, imageData) => api.post(`/planogram/${id}/check-compliance`, { image: imageData }),
+};
+
+export const dashboardService = {
+  getStats: () => api.get('/dashboard/stats'),
+  getInventorySummary: () => api.get('/dashboard/inventory'),
+};
+
+export const productService = {
+  getProducts: (params) => api.get('/products', { params }),
+  getProduct: (id) => api.get(`/products/${id}`),
+  createProduct: (data) => api.post('/products', data),
+  updateProduct: (id, data) => api.put(`/products/${id}`, data),
+};
+
+export const forecastingService = {
+  getDemandForecast: () => api.get('/forecasting/demand'),
+  getInventoryForecast: () => api.get('/forecasting/inventory'),
+};
+
+export const inventoryService = {
+  getInventory: () => api.get('/inventory'),
+  updateStock: (id, amount) => api.patch(`/inventory/${id}`, { amount }),
+};
+
+export const cameraService = {
+  getCameras: () => api.get('/cameras'),
+  getCamera: (id) => api.get(`/cameras/${id}`),
+  getLiveStream: (id) => `${API_URL}/cameras/${id}/stream`,
+};
+
+export const storeService = {
+  getStores: () => api.get('/stores'),
+  getStore: (id) => api.get(`/stores/${id}`),
+  createStore: (data) => api.post('/stores', data),
+};
+
+export const reportService = {
+  getStockoutReport: (days) => api.get('/reports/stockout', { params: { days } }),
+  getComplianceReport: () => api.get('/reports/compliance'),
+  getInventoryReport: () => api.get('/reports/inventory'),
+  exportPDF: (reportType) => api.get(`/reports/export/pdf`, { 
+    params: { report_type: reportType },
+    responseType: 'blob' 
+  }),
 };
 
 export default api;

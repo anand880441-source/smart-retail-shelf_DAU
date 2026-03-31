@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import random
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from ...core.database import get_database
-from ..routes.auth import get_current_user_required
+from ..dependencies import get_current_user_required
 
 router = APIRouter(prefix="/forecasting", tags=["Forecasting"])
 
