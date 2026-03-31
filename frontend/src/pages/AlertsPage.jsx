@@ -12,6 +12,7 @@ import {
 import AlertCard from '../components/common/Cards/AlertCard';
 import MetricCard from '../components/common/Cards/MetricCard';
 import { useAlerts } from '../context/AlertContext';
+import { API_URL, WS_URL } from '../utils/constants';
 import websocketService from '../services/websocketService';
 import { alertService } from '../services/api';
 
@@ -24,7 +25,7 @@ const AlertsPage = () => {
 
   // Connect WebSocket for real-time updates
   useEffect(() => {
-    const wsUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:8000'}/ws/alerts`;
+    const wsUrl = `${WS_URL}/ws/alerts`;
     websocketService.connect(wsUrl);
 
     const handleNewAlert = (data) => {
