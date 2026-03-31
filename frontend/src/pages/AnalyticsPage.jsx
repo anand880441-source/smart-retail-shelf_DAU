@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Box, Typography, Grid, Paper, CircularProgress, 
-  Alert, LinearProgress 
+  Alert, LinearProgress, useTheme, useMediaQuery
 } from '@mui/material';
 import { 
   Warning as WarningIcon, 
@@ -14,14 +14,17 @@ import {
   Tooltip, AreaChart, Area, XAxis, YAxis, 
   CartesianGrid, Legend 
 } from 'recharts';
+import { motion } from 'framer-motion';
 import MetricCard from '../components/common/Cards/MetricCard';
 import BarChart from '../components/common/Charts/BarChart';
 import LineChart from '../components/common/Charts/LineChart';
 import { analyticsService } from '../services/api';
 
-const COLORS = ['#EF4444', '#F97316', '#F59E0B', '#10B981', '#2563EB'];
+const COLORS = ['#EF4444', '#F97316', '#F59E0B', '#10B981', '#6366F1'];
 
 const AnalyticsPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [data, setData] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +44,6 @@ const AnalyticsPage = () => {
       } catch (err) {
         console.error('Failed to fetch analytics:', err);
         setError('Could not load analytics data. Using simulation data.');
-        // Simulation data if API fails
         setData({
           total_alerts: 145,
           resolution_rate: 85,
@@ -74,15 +76,24 @@ const AnalyticsPage = () => {
     fetchAnalyticsData();
   }, []);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 }
+  };
+
   if (loading && !data) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <CircularProgress />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <CircularProgress thickness={5} size={60} sx={{ color: 'primary.main' }} />
       </Box>
     );
   }
 
-  // Prepare chart data
   const priorityData = data?.alert_stats?.map(stat => ({
     name: stat._id?.toUpperCase() || 'Unknown',
     value: stat.count
@@ -98,116 +109,150 @@ const AnalyticsPage = () => {
     value: type.count
   })) || [];
 
+  const stockCategories = [
+    { name: 'Dairy', value: 95, color: '#10B981' },
+    { name: 'Bakery', value: 90, color: '#6366F1' },
+    { name: 'Meat', value: 85, color: '#F59E0B' },
+    { name: 'Produce', value: 80, color: '#EF4444' }
+  ];
+
+  const glassPanel = {
+    borderRadius: '24px',
+    overflow: 'hidden',
+    background: 'rgba(30, 41, 59, 0.3)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+    p: { xs: 2.5, md: 3 },
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column'
+  };
+
   return (
-    <Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+    <Box component={motion.div} variants={containerVariants} initial="hidden" animate="visible" sx={{ pb: 4 }}>
+      <Box sx={{ mb: { xs: 4, md: 6 } }}>
+        <Typography 
+          variant="h3" 
+          sx={{ 
+            fontWeight: 800, 
+            mb: 1, 
+            letterSpacing: '-0.03em',
+            fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
+            background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}
+        >
           Store Analytics
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: { xs: '0.9rem', sm: '1.1rem' } }}>
           Deep dive into your store performance and alert trends.
         </Typography>
       </Box>
 
-      {error && <Alert severity="warning" sx={{ mb: 3 }}>{error}</Alert>}
+      {error && (
+        <Alert 
+          severity="warning" 
+          variant="outlined"
+          sx={{ mb: 4, borderRadius: '16px', bgcolor: 'rgba(245, 158, 11, 0.05)', borderColor: 'rgba(245, 158, 11, 0.2)' }}
+        >
+          {error}
+        </Alert>
+      )}
 
-      {/* KPI Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <MetricCard 
-            title="Total Alerts" 
-            value={data?.total_alerts || 0} 
-            icon={<WarningIcon />}
-            color="#EF4444"
-          />
+      {/* KPI Cards Grid with better scaling */}
+      <Grid container spacing={3} sx={{ mb: 6 }}>
+        <Grid item xs={12} sm={6} lg={3} component={motion.div} variants={itemVariants}>
+          <MetricCard title="Total Alerts" value={data?.total_alerts || 0} icon={<WarningIcon sx={{ fontSize: 24 }} />} color="#EF4444" trend="7 days" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <MetricCard 
-            title="Resolution Rate" 
-            value={`${data?.resolution_rate || 0}%`} 
-            icon={<CheckCircleIcon />}
-            color="#10B981"
-            subtitle="Closed within 24h"
-          />
+        <Grid item xs={12} sm={6} lg={3} component={motion.div} variants={itemVariants}>
+          <MetricCard title="Resolution Rate" value={`${data?.resolution_rate || 0}%`} icon={<CheckCircleIcon sx={{ fontSize: 24 }} />} color="#10B981" subtitle="Closed within 24h" trend="On Track" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <MetricCard 
-            title="Avg Response" 
-            value={`${data?.avg_response_time || 0}m`} 
-            icon={<SpeedIcon />}
-            color="#F59E0B"
-            subtitle="Time to acknowledge"
-          />
+        <Grid item xs={12} sm={6} lg={3} component={motion.div} variants={itemVariants}>
+          <MetricCard title="Avg Response" value={`${data?.avg_response_time || 0}m`} icon={<SpeedIcon sx={{ fontSize: 24 }} />} color="#F59E0B" subtitle="Time to acknowledge" trend="Improving" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <MetricCard 
-            title="Revenue Saved" 
-            value={`$${data?.alert_stats?.reduce((sum, s) => sum + (s.revenue || 0), 0).toLocaleString() || 0}`} 
-            icon={<MoneyIcon />}
-            color="#2563EB"
-            subtitle="From resolved stockouts"
-          />
+        <Grid item xs={12} sm={6} lg={3} component={motion.div} variants={itemVariants}>
+          <MetricCard title="Revenue Saved" value={`$${data?.alert_stats?.reduce((sum, s) => sum + (s.revenue || 0), 0).toLocaleString() || 0}`} icon={<MoneyIcon sx={{ fontSize: 24 }} />} color="#6366F1" subtitle="From resolved stockouts" trend="Growing" />
         </Grid>
       </Grid>
 
       {/* Charts Row 1 */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Alert Trends (Last 7 Days)</Typography>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} lg={8} component={motion.div} variants={itemVariants}>
+          <Paper sx={glassPanel}>
+            <Typography variant="h5" sx={{ mb: 3, fontWeight: 800, letterSpacing: '-0.02em', fontSize: { xs: '1.25rem', md: '1.5rem' } }}>Alert Trends</Typography>
             <LineChart data={trendData} dataKey="alerts" xAxisKey="date" stroke="#EF4444" />
           </Paper>
         </Grid>
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Priority Distribution</Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={priorityData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {priorityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+        <Grid item xs={12} lg={4} component={motion.div} variants={itemVariants}>
+          <Paper sx={glassPanel}>
+            <Typography variant="h5" sx={{ mb: 3, fontWeight: 800, letterSpacing: '-0.02em', fontSize: { xs: '1.25rem', md: '1.5rem' } }}>Priority Split</Typography>
+            <Box sx={{ flexGrow: 1, minHeight: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={priorityData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={85}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {priorityData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(17, 24, 39, 0.9)', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
+                      borderRadius: '12px',
+                      color: '#F9FAFB',
+                      fontWeight: 600
+                    }} 
+                  />
+                  <Legend 
+                    wrapperStyle={{ color: '#9CA3AF', fontWeight: 500, fontSize: '0.85rem' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
           </Paper>
         </Grid>
       </Grid>
 
       {/* Charts Row 2 */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Alerts by Type</Typography>
-            <BarChart data={typeData} dataKey="value" xAxisKey="name" fill="#2563EB" />
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} lg={6} component={motion.div} variants={itemVariants}>
+          <Paper sx={glassPanel}>
+            <Typography variant="h5" sx={{ mb: 3, fontWeight: 800, letterSpacing: '-0.02em', fontSize: { xs: '1.25rem', md: '1.5rem' } }}>Alerts by Type</Typography>
+            <BarChart data={typeData} dataKey="value" xAxisKey="name" fill="#6366F1" />
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>Stock Availability</Typography>
-            </Box>
-            <Box sx={{ mt: 2 }}>
-              {['Dairy', 'Bakery', 'Meat', 'Produce'].map((cat, idx) => (
-                <Box key={cat} sx={{ mb: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2" fontWeight={600}>{cat}</Typography>
-                    <Typography variant="body2" color="text.secondary">{95 - (idx * 5)}%</Typography>
+        <Grid item xs={12} lg={6} component={motion.div} variants={itemVariants}>
+          <Paper sx={glassPanel}>
+            <Typography variant="h5" sx={{ mb: 3, fontWeight: 800, letterSpacing: '-0.02em', fontSize: { xs: '1.25rem', md: '1.5rem' } }}>Stock Availability</Typography>
+            <Box sx={{ mt: 1 }}>
+              {stockCategories.map((cat) => (
+                <Box key={cat.name} sx={{ mb: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>{cat.name}</Typography>
+                    <Typography variant="body2" sx={{ color: cat.color, fontWeight: 700 }}>{cat.value}%</Typography>
                   </Box>
                   <LinearProgress 
                     variant="determinate" 
-                    value={95 - (idx * 5)} 
-                    sx={{ height: 8, borderRadius: 4, bgcolor: 'grey.100' }} 
+                    value={cat.value} 
+                    sx={{ 
+                      height: 10, 
+                      borderRadius: 5, 
+                      bgcolor: 'rgba(255,255,255,0.04)',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 5,
+                        background: `linear-gradient(90deg, ${cat.color}90, ${cat.color})`,
+                      }
+                    }} 
                   />
                 </Box>
               ))}
@@ -216,28 +261,37 @@ const AnalyticsPage = () => {
         </Grid>
       </Grid>
 
-      {/* Forecast Section */}
+      {/* Forecast Section Refined */}
       {forecast && (
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+        <Paper sx={{ ...glassPanel, mb: 3 }} component={motion.div} variants={itemVariants}>
+          <Typography variant="h5" sx={{ mb: 3, fontWeight: 800, letterSpacing: '-0.02em', fontSize: { xs: '1.25rem', md: '1.5rem' } }}>
             📈 Demand Forecasting
           </Typography>
-          <ResponsiveContainer width="100%" height={350}>
-            <AreaChart data={forecast.next_7_days?.dates?.map((date, i) => ({
-              date,
-              forecast: forecast.next_7_days.forecast[i],
-              upper: forecast.next_7_days.upper[i],
-              lower: forecast.next_7_days.lower[i]
-            })) || []}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Area type="monotone" dataKey="forecast" stroke="#2563EB" fill="#DBEAFE" strokeWidth={2} />
-              <Area type="monotone" dataKey="upper" stroke="#F59E0B" fill="#FEF3C7" opacity={0.3} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <Box sx={{ height: 350, width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={forecast.next_7_days?.dates?.map((date, i) => ({
+                date,
+                forecast: forecast.next_7_days.forecast[i],
+                upper: forecast.next_7_days.upper[i],
+                lower: forecast.next_7_days.lower[i]
+              })) || []}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(17, 24, 39, 0.9)', 
+                    border: '1px solid rgba(255,255,255,0.1)', 
+                    borderRadius: '12px',
+                    color: '#F9FAFB'
+                  }} 
+                />
+                <Legend wrapperStyle={{ color: '#9CA3AF' }} />
+                <Area type="monotone" dataKey="forecast" stroke="#6366F1" fill="rgba(99, 102, 241, 0.1)" strokeWidth={3} />
+                <Area type="monotone" dataKey="upper" stroke="#F59E0B" fill="rgba(245, 158, 11, 0.05)" opacity={0.3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </Box>
         </Paper>
       )}
     </Box>

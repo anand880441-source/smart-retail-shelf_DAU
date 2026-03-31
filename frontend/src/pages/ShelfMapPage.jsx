@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Grid,
   Card,
@@ -14,7 +13,9 @@ import {
   DialogContent,
   LinearProgress,
   Avatar,
-  Paper
+  Paper,
+  useTheme,
+  Button
 } from '@mui/material';
 import {
   Store as StoreIcon,
@@ -29,8 +30,11 @@ import {
   LocalDrink as DrinkIcon,
   Fastfood as FastfoodIcon,
   Apple as AppleIcon,
-  BakeryDining as BreadIcon
+  BakeryDining as BreadIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
+import MetricCard from '../components/common/Cards/MetricCard';
 
 // Mock product data
 const aisles = [
@@ -107,6 +111,7 @@ const getStatusText = (status) => {
 };
 
 const ShelfMapPage = () => {
+  const theme = useTheme();
   const [selectedShelf, setSelectedShelf] = useState(null);
   const [zoom, setZoom] = useState(1);
   const [hoveredAisle, setHoveredAisle] = useState(null);
@@ -120,11 +125,11 @@ const ShelfMapPage = () => {
   };
 
   const handleZoomIn = () => {
-    setZoom(Math.min(zoom + 0.1, 1.5));
+    setZoom(Math.min(zoom + 0.1, 1.3));
   };
 
   const handleZoomOut = () => {
-    setZoom(Math.max(zoom - 0.1, 0.7));
+    setZoom(Math.max(zoom - 0.1, 0.8));
   };
 
   // Calculate store health metrics
@@ -139,242 +144,314 @@ const ShelfMapPage = () => {
 
   const storeHealth = Math.round((healthyProducts / totalProducts) * 100);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const aisleVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 }
+  };
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Container maxWidth="xl">
-        {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" fontWeight="bold" sx={{ color: '#1F2937' }}>
-            🗺️ Interactive Shelf Map
+    <Box component={motion.div} variants={containerVariants} initial="hidden" animate="visible" sx={{ pb: 4 }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, mb: 6 }}>
+        <Box>
+          <Typography 
+            variant="h3" 
+            sx={{ 
+              fontWeight: 800, 
+              mb: 1, 
+              letterSpacing: '-0.03em',
+              background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' }
+            }}
+          >
+            Interactive Shelf Map
           </Typography>
-          <Box>
-            <Tooltip title="Zoom In">
-              <IconButton onClick={handleZoomIn} sx={{ bgcolor: '#2563EB', color: 'white', mr: 1 }}>
-                <ZoomInIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Zoom Out">
-              <IconButton onClick={handleZoomOut} sx={{ bgcolor: '#2563EB', color: 'white', mr: 1 }}>
-                <ZoomOutIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Refresh">
-              <IconButton sx={{ bgcolor: '#6B7280', color: 'white' }}>
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
+          <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.1rem' }}>
+            Real-time visual inventory of your store floorspace.
+          </Typography>
         </Box>
+        <Box sx={{ display: 'flex', gap: 1.5, p: 1, borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <Tooltip title="Zoom In">
+            <IconButton onClick={handleZoomIn} sx={{ color: 'primary.main', bgcolor: 'rgba(99, 102, 241, 0.1)', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.2)' } }}>
+              <ZoomInIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Zoom Out">
+            <IconButton onClick={handleZoomOut} sx={{ color: 'primary.main', bgcolor: 'rgba(99, 102, 241, 0.1)', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.2)' } }}>
+              <ZoomOutIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Refresh">
+            <IconButton sx={{ color: 'text.secondary', bgcolor: 'rgba(255,255,255,0.05)' }}>
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </Box>
 
-        {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ bgcolor: '#2563EB', color: 'white' }}>
-              <CardContent>
-                <Typography variant="h3">{storeHealth}%</Typography>
-                <Typography variant="body2">Store Health</Typography>
-                <LinearProgress variant="determinate" value={storeHealth} sx={{ bgcolor: 'rgba(255,255,255,0.3)', '& .MuiLinearProgress-bar': { bgcolor: 'white' }, mt: 1 }} />
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ bgcolor: '#10B981', color: 'white' }}>
-              <CardContent>
-                <Typography variant="h3">{healthyProducts}</Typography>
-                <Typography variant="body2">In Stock SKUs</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ bgcolor: '#F59E0B', color: 'white' }}>
-              <CardContent>
-                <Typography variant="h3">{lowProducts}</Typography>
-                <Typography variant="body2">Low Stock</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ bgcolor: '#F97316', color: 'white' }}>
-              <CardContent>
-                <Typography variant="h3">{criticalProducts}</Typography>
-                <Typography variant="body2">Critical</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ bgcolor: '#EF4444', color: 'white' }}>
-              <CardContent>
-                <Typography variant="h3">{emptyProducts}</Typography>
-                <Typography variant="body2">Out of Stock</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+      {/* Stats Cards Integration with MetricCard */}
+      <Grid container spacing={3} sx={{ mb: 6 }}>
+        <Grid item xs={12} sm={6} md={2.4}>
+          <MetricCard title="Health" value={`${storeHealth}%`} color="#6366F1" trend="Stable" />
         </Grid>
+        <Grid item xs={12} sm={6} md={2.4}>
+          <MetricCard title="In Stock" value={healthyProducts} color="#10B981" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={2.4}>
+          <MetricCard title="Low" value={lowProducts} color="#F59E0B" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={2.4}>
+          <MetricCard title="Critical" value={criticalProducts} color="#F97316" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={2.4}>
+          <MetricCard title="OOS" value={emptyProducts} color="#EF4444" />
+        </Grid>
+      </Grid>
 
-        {/* Store Layout - Aisle Grid */}
-        <Box
-          sx={{
-            transform: `scale(${zoom})`,
-            transformOrigin: 'top center',
-            transition: 'transform 0.3s ease'
-          }}
-        >
-          <Grid container spacing={2}>
-            {aisles.map((aisle) => (
-              <Grid item xs={12} key={aisle.id}>
-                <Paper
-                  elevation={hoveredAisle === aisle.id ? 6 : 2}
-                  onMouseEnter={() => setHoveredAisle(aisle.id)}
-                  onMouseLeave={() => setHoveredAisle(null)}
+      {/* Store Layout - Aisle Grid */}
+      <Box
+        sx={{
+          transform: `scale(${zoom})`,
+          transformOrigin: 'top center',
+          transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          perspective: '1000px'
+        }}
+      >
+        <Grid container spacing={4}>
+          {aisles.map((aisle) => (
+            <Grid item xs={12} key={aisle.id} component={motion.div} variants={aisleVariants}>
+              <Paper
+                elevation={hoveredAisle === aisle.id ? 8 : 2}
+                onMouseEnter={() => setHoveredAisle(aisle.id)}
+                onMouseLeave={() => setHoveredAisle(null)}
+                sx={{
+                  borderRadius: 6,
+                  overflow: 'hidden',
+                  transition: 'all 0.3s ease',
+                  background: 'rgba(30, 41, 59, 0.2)',
+                  backdropFilter: 'blur(10px)',
+                  border: hoveredAisle === aisle.id 
+                    ? '1px solid rgba(99, 102, 241, 0.4)' 
+                    : '1px solid rgba(255, 255, 255, 0.05)',
+                  boxShadow: hoveredAisle === aisle.id 
+                    ? '0 20px 40px -10px rgba(0,0,0,0.5)' 
+                    : 'none'
+                }}
+              >
+                {/* Aisle Header */}
+                <Box
                   sx={{
-                    borderRadius: 3,
-                    overflow: 'hidden',
-                    transition: 'all 0.3s ease',
-                    border: hoveredAisle === aisle.id ? '2px solid #2563EB' : '1px solid #E5E7EB'
+                    p: 3,
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                    bgcolor: 'rgba(255, 255, 255, 0.02)'
                   }}
                 >
-                  {/* Aisle Header */}
-                  <Box
-                    sx={{
-                      bgcolor: '#F3F4F6',
-                      p: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      borderBottom: '2px solid #E5E7EB'
+                  <Avatar 
+                    sx={{ 
+                      bgcolor: 'rgba(99, 102, 241, 0.1)', 
+                      color: 'primary.main',
+                      mr: 2,
+                      width: 48,
+                      height: 48,
+                      border: '1px solid rgba(99, 102, 241, 0.2)'
                     }}
                   >
-                    <Avatar sx={{ bgcolor: '#2563EB', mr: 2 }}>
-                      {aisle.icon}
-                    </Avatar>
-                    <Typography variant="h6" fontWeight="bold">
-                      Aisle {aisle.id}: {aisle.name}
-                    </Typography>
-                  </Box>
+                    {aisle.icon}
+                  </Avatar>
+                  <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
+                    Aisle {aisle.id}: {aisle.name}
+                  </Typography>
+                </Box>
 
-                  {/* Shelves Grid */}
-                  <Grid container spacing={2} sx={{ p: 2 }}>
-                    {aisle.shelves.map((shelf) => (
-                      <Grid item xs={12} sm={6} md={4} key={shelf.id}>
-                        <Card
-                          onClick={() => handleShelfClick(shelf)}
-                          sx={{
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            '&:hover': {
-                              transform: 'translateY(-4px)',
-                              boxShadow: 6
-                            },
-                            borderLeft: `4px solid ${getStatusColor(shelf.status)}`
-                          }}
-                        >
-                          <CardContent>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                              <Box>
-                                <Typography variant="subtitle1" fontWeight="bold">
-                                  {shelf.product}
-                                </Typography>
-                                <Typography variant="caption" color="textSecondary">
-                                  SKU: {shelf.sku}
-                                </Typography>
-                                <Box sx={{ mt: 1 }}>
-                                  <Chip
-                                    size="small"
-                                    label={shelf.position}
-                                    sx={{ mr: 1, bgcolor: '#E5E7EB' }}
-                                  />
-                                  <Chip
-                                    size="small"
-                                    label={getStatusText(shelf.status)}
-                                    sx={{ bgcolor: getStatusColor(shelf.status), color: 'white' }}
-                                  />
-                                </Box>
-                              </Box>
-                              <ShelfIcon sx={{ color: getStatusColor(shelf.status) }} />
-                            </Box>
-                            <Box sx={{ mt: 2 }}>
-                              <Typography variant="body2" color="textSecondary">
-                                Stock Level: {shelf.stock} units
+                {/* Shelves Grid */}
+                <Grid container spacing={3} sx={{ p: 3 }}>
+                  {aisle.shelves.map((shelf) => (
+                    <Grid item xs={12} sm={6} md={4} key={shelf.id}>
+                      <Card
+                        onClick={() => handleShelfClick(shelf)}
+                        sx={{
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          height: '100%',
+                          background: 'rgba(17, 24, 39, 0.4)',
+                          border: '1px solid rgba(255, 255, 255, 0.04)',
+                          borderRadius: 4,
+                          '&:hover': {
+                            transform: 'translateY(-6px)',
+                            background: 'rgba(17, 24, 39, 0.6)',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            boxShadow: `0 12px 20px -10px ${getStatusColor(shelf.status)}40`
+                          },
+                          borderLeft: `6px solid ${getStatusColor(shelf.status)}`
+                        }}
+                      >
+                        <CardContent sx={{ p: 3 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                            <Box>
+                              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, lineHeight: 1.2 }}>
+                                {shelf.product}
                               </Typography>
-                              <LinearProgress
-                                variant="determinate"
-                                value={shelf.stock}
-                                sx={{
-                                  mt: 1,
-                                  height: 8,
-                                  borderRadius: 4,
-                                  bgcolor: '#E5E7EB',
-                                  '& .MuiLinearProgress-bar': {
-                                    bgcolor: getStatusColor(shelf.status),
-                                    borderRadius: 4
-                                  }
-                                }}
-                              />
-                              <Typography variant="h6" sx={{ mt: 1, color: '#2563EB' }}>
+                              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                                SKU: {shelf.sku}
+                              </Typography>
+                            </Box>
+                            <ShelfIcon sx={{ color: getStatusColor(shelf.status), fontSize: 28 }} />
+                          </Box>
+
+                          <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+                            <Chip
+                              size="small"
+                              label={shelf.position}
+                              sx={{ fontWeight: 700, fontSize: '0.65rem', borderRadius: '6px', bgcolor: 'rgba(255,255,255,0.05)' }}
+                            />
+                            <Chip
+                              size="small"
+                              label={getStatusText(shelf.status)}
+                              sx={{ 
+                                fontWeight: 800, 
+                                fontSize: '0.65rem', 
+                                borderRadius: '6px', 
+                                bgcolor: `${getStatusColor(shelf.status)}20`, 
+                                color: getStatusColor(shelf.status),
+                                border: `1px solid ${getStatusColor(shelf.status)}40`
+                              }}
+                            />
+                          </Box>
+
+                          <Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                                Stock: {shelf.stock} units
+                              </Typography>
+                              <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 800 }}>
                                 ${shelf.price}
                               </Typography>
                             </Box>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Product Detail Dialog */}
-        <Dialog open={!!selectedShelf} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-          {selectedShelf && (
-            <>
-              <DialogTitle sx={{ bgcolor: getStatusColor(selectedShelf.status), color: 'white' }}>
-                Product Details
-              </DialogTitle>
-              <DialogContent sx={{ p: 3 }}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Typography variant="h5" fontWeight="bold">{selectedShelf.product}</Typography>
-                    <Typography variant="body2" color="textSecondary">SKU: {selectedShelf.sku}</Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">Status</Typography>
-                    <Typography variant="h6" sx={{ color: getStatusColor(selectedShelf.status) }}>
-                      {getStatusText(selectedShelf.status)}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">Current Stock</Typography>
-                    <Typography variant="h6">{selectedShelf.stock} units</Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">Price</Typography>
-                    <Typography variant="h6" sx={{ color: '#2563EB' }}>${selectedShelf.price}</Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">Location</Typography>
-                    <Typography variant="h6">Aisle {selectedShelf.id}, {selectedShelf.position}</Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                      <Chip 
-                        icon={<WarningIcon />} 
-                        label={selectedShelf.status === 'empty' ? 'Immediate Replenishment Required' : 'Schedule Replenishment'} 
-                        sx={{ bgcolor: getStatusColor(selectedShelf.status), color: 'white' }}
-                      />
-                      <Chip 
-                        icon={<CheckCircleIcon />} 
-                        label="Add to Restock List" 
-                        sx={{ bgcolor: '#2563EB', color: 'white' }}
-                      />
-                    </Box>
-                  </Grid>
+                            <LinearProgress
+                              variant="determinate"
+                              value={shelf.stock}
+                              sx={{
+                                height: 8,
+                                borderRadius: 4,
+                                bgcolor: 'rgba(255, 255, 255, 0.03)',
+                                '& .MuiLinearProgress-bar': {
+                                  bgcolor: getStatusColor(shelf.status),
+                                  borderRadius: 4
+                                }
+                              }}
+                            />
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
                 </Grid>
-              </DialogContent>
-            </>
-          )}
-        </Dialog>
-      </Container>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* Product Detail Dialog Refinement */}
+      <Dialog 
+        open={!!selectedShelf} 
+        onClose={handleCloseDialog} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '24px',
+            background: '#111827',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+          }
+        }}
+      >
+        {selectedShelf && (
+          <>
+            <DialogTitle sx={{ 
+              p: 3, 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              background: `linear-gradient(135deg, ${getStatusColor(selectedShelf.status)}20 0%, transparent 100%)`,
+              borderBottom: '1px solid rgba(255,255,255,0.05)'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1, borderRadius: '10px', bgcolor: `${getStatusColor(selectedShelf.status)}20`, color: getStatusColor(selectedShelf.status) }}>
+                  <ShelfIcon fontSize="small" />
+                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>Shelf Inventory Details</Typography>
+              </Box>
+              <IconButton onClick={handleCloseDialog} sx={{ color: 'text.secondary' }}>
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent sx={{ p: 4 }}>
+              <Grid container spacing={4}>
+                <Grid item xs={12}>
+                  <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>{selectedShelf.product}</Typography>
+                  <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 600 }}>SKU Trace: {selectedShelf.sku}</Typography>
+                </Grid>
+                
+                <Grid item xs={6}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Status</Typography>
+                  <Typography variant="h5" sx={{ color: getStatusColor(selectedShelf.status), fontWeight: 800 }}>
+                    {getStatusText(selectedShelf.status)}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Stock Percentage</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>{selectedShelf.stock}%</Typography>
+                </Grid>
+                
+                <Grid item xs={6}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Unit Price</Typography>
+                  <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 800 }}>${selectedShelf.price}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Physical Path</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>Aisle {selectedShelf.id}, {selectedShelf.position}</Typography>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                    <Button 
+                      variant="contained" 
+                      fullWidth
+                      sx={{ 
+                        borderRadius: '12px', 
+                        py: 1.5, 
+                        fontWeight: 700,
+                        bgcolor: getStatusColor(selectedShelf.status),
+                        '&:hover': { bgcolor: getStatusColor(selectedShelf.status), opacity: 0.9 }
+                      }}
+                    >
+                      {selectedShelf.status === 'empty' ? 'Urgent Restock' : 'Order Stock'}
+                    </Button>
+                    <Button 
+                      variant="outlined" 
+                      fullWidth
+                      sx={{ borderRadius: '12px', py: 1.5, fontWeight: 700, borderColor: 'rgba(255,255,255,0.1)', color: 'text.primary' }}
+                    >
+                      Move Location
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </DialogContent>
+          </>
+        )}
+      </Dialog>
     </Box>
   );
 };

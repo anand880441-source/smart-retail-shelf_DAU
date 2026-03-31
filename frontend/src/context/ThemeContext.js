@@ -1,28 +1,18 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
+import React, { createContext, useContext, useState } from 'react';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import theme from '../theme';
 
 const ThemeContext = createContext();
 
-const lightTheme = createTheme({
-  palette: { mode: 'light', primary: { main: '#2563EB' } }
-});
-
-const darkTheme = createTheme({
-  palette: { mode: 'dark', primary: { main: '#3B82F6' }, background: { default: '#1F2937', paper: '#374151' } }
-});
-
 export const ThemeProvider = ({ children }) => {
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('dark_mode') === 'true');
-
-  useEffect(() => {
-    localStorage.setItem('dark_mode', darkMode);
-  }, [darkMode]);
-
-  const toggleDarkMode = () => setDarkMode(!darkMode);
+  // We've moved to a single "Premium Dark Mode" theme as approved.
+  const [darkMode] = useState(true);
 
   return (
-    <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
-      <MuiThemeProvider theme={darkMode ? darkTheme : lightTheme}>
+    <ThemeContext.Provider value={{ darkMode }}>
+      <MuiThemeProvider theme={theme}>
+        <CssBaseline />
         {children}
       </MuiThemeProvider>
     </ThemeContext.Provider>
