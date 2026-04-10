@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import OAuthCallback from "./pages/OAuthCallback";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ShelfMapPage from "./pages/ShelfMapPage";
+import ShelfAnalysis from "./pages/ShelfAnalysis";
 import AlertsPage from "./pages/AlertsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import PlanogramPage from "./pages/PlanogramPage";
@@ -55,6 +56,16 @@ function App() {
                   <ProtectedRoute>
                     <MainLayout>
                       <ShelfMapPage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/shelf-analysis"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ShelfAnalysis />
                     </MainLayout>
                   </ProtectedRoute>
                 }

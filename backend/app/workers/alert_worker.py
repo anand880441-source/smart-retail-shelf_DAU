@@ -2,10 +2,12 @@ import asyncio
 from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from ..core.config import settings
+
 async def process_alerts():
     """Background worker to process and dispatch alerts"""
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.smart_retail
+    client = AsyncIOMotorClient(settings.MONGODB_URL)
+    db = client[settings.MONGODB_DB_NAME]
     
     while True:
         # Find unprocessed critical alerts

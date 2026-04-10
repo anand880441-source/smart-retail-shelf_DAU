@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Chip, Box, IconButton, useTheme } from '@mui/material';
 import { CheckCircle as CheckCircleIcon, Warning as WarningIcon, Error as ErrorIcon, Info as InfoIcon, LocationOn as LocationOnIcon, AccessTime as AccessTimeIcon } from '@mui/icons-material';
 
-const getPriorityConfig = (priority) => {
+const getPriorityConfig = (priority: string) => {
   switch(priority) {
     case 'critical': return { color: '#EF4444', icon: <ErrorIcon fontSize="small" />, label: 'CRITICAL' };
     case 'high': return { color: '#F97316', icon: <WarningIcon fontSize="small" />, label: 'HIGH' };
@@ -11,7 +11,12 @@ const getPriorityConfig = (priority) => {
   }
 };
 
-const AlertCard = ({ alert, onResolve }) => {
+interface AlertCardProps {
+  alert: any;
+  onResolve?: (id: string) => void;
+}
+
+const AlertCard: React.FC<AlertCardProps> = ({ alert, onResolve }) => {
   const config = getPriorityConfig(alert.priority);
   const theme = useTheme();
 

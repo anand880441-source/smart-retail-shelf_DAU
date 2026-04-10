@@ -34,8 +34,8 @@ api.interceptors.response.use(
 );
 
 export const authService = {
-  register: (userData) => api.post('/auth/register', userData),
-  login: (username, password) => {
+  register: (userData: any) => api.post('/auth/register', userData),
+  login: (username: string, password: string) => {
     const formData = new URLSearchParams();
     formData.append('username', username);
     formData.append('password', password);
@@ -58,9 +58,9 @@ export const authService = {
 };
 
 export const alertService = {
-  getAlerts: (params) => api.get('/alerts', { params }),
+  getAlerts: (params: any) => api.get('/alerts', { params }),
   getActiveAlerts: () => api.get('/alerts/active'),
-  updateAlertStatus: (id, status) => api.put(`/alerts/${id}`, { status }),
+  updateAlertStatus: (id: string, status: string) => api.put(`/alerts/${id}`, { status }),
   getAlertStats: () => api.get('/alerts/stats'),
 };
 
@@ -72,9 +72,9 @@ export const analyticsService = {
 
 export const planogramService = {
   getPlanograms: () => api.get('/planogram'),
-  getPlanogram: (id) => api.get(`/planogram/${id}`),
-  createPlanogram: (data) => api.post('/planogram', data),
-  checkCompliance: (id, imageData) => api.post(`/planogram/${id}/check-compliance`, { image: imageData }),
+  getPlanogram: (id: string) => api.get(`/planogram/${id}`),
+  createPlanogram: (data: any) => api.post('/planogram', data),
+  checkCompliance: (id: string, imageData: string) => api.post(`/planogram/${id}/check-compliance`, { image: imageData }),
 };
 
 export const dashboardService = {
@@ -83,10 +83,10 @@ export const dashboardService = {
 };
 
 export const productService = {
-  getProducts: (params) => api.get('/products', { params }),
-  getProduct: (id) => api.get(`/products/${id}`),
-  createProduct: (data) => api.post('/products', data),
-  updateProduct: (id, data) => api.put(`/products/${id}`, data),
+  getProducts: (params: any) => api.get('/products', { params }),
+  getProduct: (id: string) => api.get(`/products/${id}`),
+  createProduct: (data: any) => api.post('/products', data),
+  updateProduct: (id: string, data: any) => api.put(`/products/${id}`, data),
 };
 
 export const forecastingService = {
@@ -96,19 +96,19 @@ export const forecastingService = {
 
 export const inventoryService = {
   getInventory: () => api.get('/inventory'),
-  updateStock: (id, amount) => api.patch(`/inventory/${id}`, { amount }),
+  updateStock: (id: string, amount: number) => api.patch(`/inventory/${id}`, { amount }),
 };
 
 export const cameraService = {
   getCameras: () => api.get('/cameras'),
-  getCamera: (id) => api.get(`/cameras/${id}`),
-  getLiveStream: (id) => `${API_URL}/cameras/${id}/stream`,
+  getCamera: (id: string) => api.get(`/cameras/${id}`),
+  getLiveStream: (id: string) => `${API_URL}/cameras/${id}/stream`,
 };
 
 export const storeService = {
   getStores: () => api.get('/stores'),
-  getStore: (id) => api.get(`/stores/${id}`),
-  createStore: (data) => api.post('/stores', data),
+  getStore: (id: string) => api.get(`/stores/${id}`),
+  createStore: (data: any) => api.post('/stores', data),
 };
 
 export const reportService = {
@@ -122,3 +122,4 @@ export const reportService = {
 };
 
 export default api;
+export { api };

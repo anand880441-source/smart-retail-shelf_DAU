@@ -2,7 +2,16 @@ import React from 'react';
 import { Card, CardContent, Typography, Box, useTheme } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
-const MetricCard = ({ title, value, icon, color, subtitle, trend }) => {
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  icon?: React.ReactNode;
+  color: string;
+  subtitle?: string;
+  trend?: string;
+}
+
+const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, color, subtitle, trend }) => {
   const theme = useTheme();
 
   return (

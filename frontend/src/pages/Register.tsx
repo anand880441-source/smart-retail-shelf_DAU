@@ -21,9 +21,11 @@ const Register = () => {
     { value: 'associate', label: 'Store Associate' }
   ];
 
-  const handleChange = (e) => { setFormData({ ...formData, [e.target.name]: e.target.value }); };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -31,7 +33,7 @@ const Register = () => {
       await authService.register(formData);
       await login(formData.email, formData.password);
       navigate('/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.detail || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);

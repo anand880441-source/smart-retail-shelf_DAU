@@ -1,11 +1,17 @@
 import React from 'react';
 import { 
-  BarChart as ReBarChart, Bar, XAxis, YAxis, 
+  LineChart as ReLineChart, Line, XAxis, YAxis, 
   CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 import { useTheme, Box } from '@mui/material';
 
-const CustomTooltip = ({ active, payload, label }) => {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <Box 
@@ -21,7 +27,7 @@ const CustomTooltip = ({ active, payload, label }) => {
         <Box sx={{ fontWeight: 800, mb: 0.5, fontSize: '0.75rem', color: 'text.secondary', textTransform: 'uppercase' }}>
           {label}
         </Box>
-        <Box sx={{ color: 'primary.main', fontWeight: 700, fontSize: '1rem' }}>
+        <Box sx={{ color: payload[0].color || 'primary.main', fontWeight: 700, fontSize: '1rem' }}>
           {payload[0].value.toLocaleString()}
         </Box>
       </Box>
@@ -30,12 +36,26 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const BarChart = ({ data, dataKey, xAxisKey, fill = '#6366F1' }) => {
+interface LineChartProps {
+  data: any[];
+  dataKey: string;
+  xAxisKey: string;
+  stroke?: string;
+  strokeWidth?: number;
+}
+
+const LineChart: React.FC<LineChartProps> = ({ data, dataKey, xAxisKey, stroke = '#6366F1', strokeWidth = 3 }) => {
   const theme = useTheme();
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <ReBarChart data={data} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+      <ReLineChart data={data} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+        <defs>
+          <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={stroke} stopOpacity={0.1}/>
+            <stop offset="95%" stopColor={stroke} stopOpacity={0}/>
+          </linearGradient>
+        </defs>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
         <XAxis 
           dataKey={xAxisKey} 
@@ -49,16 +69,19 @@ const BarChart = ({ data, dataKey, xAxisKey, fill = '#6366F1' }) => {
           tickLine={false} 
           tick={{ fill: theme.palette.text.secondary, fontSize: 12, fontWeight: 500 }}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-        <Bar 
+        <Tooltip content={<CustomTooltip />} />
+        <Line 
+          type="monotone" 
           dataKey={dataKey} 
-          fill={fill} 
-          radius={[6, 6, 0, 0]} 
-          barSize={32}
+          stroke={stroke} 
+          strokeWidth={strokeWidth} 
+          dot={{ r: 4, fill: stroke, strokeWidth: 2, stroke: '#111827' }}
+          activeDot={{ r: 6, strokeWidth: 0, fill: '#fff' }}
+          animationDuration={1500}
         />
-      </ReBarChart>
+      </ReLineChart>
     </ResponsiveContainer>
   );
 };
 
-export default BarChart;
+export default LineChart;

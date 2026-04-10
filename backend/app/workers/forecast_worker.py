@@ -3,10 +3,12 @@ import random
 from datetime import datetime, timedelta
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from ..core.config import settings
+
 async def generate_daily_forecasts():
     """Background worker to generate daily demand forecasts"""
-    client = AsyncIOMotorClient("mongodb://localhost:27017")
-    db = client.smart_retail
+    client = AsyncIOMotorClient(settings.MONGODB_URL)
+    db = client[settings.MONGODB_DB_NAME]
     
     while True:
         # Run at midnight

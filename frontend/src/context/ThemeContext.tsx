@@ -3,9 +3,13 @@ import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from '../theme';
 
-const ThemeContext = createContext();
+interface ThemeContextType {
+  darkMode: boolean;
+}
 
-export const ThemeProvider = ({ children }) => {
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // We've moved to a single "Premium Dark Mode" theme as approved.
   const [darkMode] = useState(true);
 
@@ -19,4 +23,10 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-export const useTheme = () => useContext(ThemeContext);
+export const useCustomTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useCustomTheme must be used within a ThemeProvider');
+  }
+  return context;
+};
